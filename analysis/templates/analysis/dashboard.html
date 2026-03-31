@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StoreInsight — 대시보드</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: #0f172a; }
+    .drop-zone { transition: all 0.2s; }
+    .drop-zone.dragover { border-color: #3b82f6; background-color: rgba(59,130,246,0.08); }
+    .tab-btn.active { background: #3b82f6; color: #fff; }
+  </style>
+</head>
+<body class="min-h-screen text-white">
+
+  <!-- 상단 네비게이션 -->
+  <nav class="border-b border-slate-700 bg-slate-900 bg-opacity-80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+        </div>
+        <span class="font-bold text-lg">StoreInsight</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="text-slate-400 text-sm">👤 {{ request.user.username }}</span>
+        <a href="{% url 'logout' %}"
+           class="text-sm px-4 py-2 rounded-lg border border-slate-600 text-slate-300 hover:border-slate-400 transition">
+          로그아웃
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-6xl mx-auto px-6 py-10">
+
+    <!-- 헤더 -->
+    <div class="mb-8">
+      <h1 class="text-2xl font-bold text-white mb-1">분석 대시보드</h1>
+      <p class="text-slate-400 text-sm">음성(회의) 또는 영상(CCTV) 파일을 업로드하여 AI 분석을 시작하세요.</p>
+    </div>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="mb-6 p-4 rounded-xl bg-red-500 bg-opacity-20 border border-red-500 border-opacity-40 text-red-300 text-sm">
+      {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- 탭 -->
+    <div class="flex gap-2 mb-6">
+      <button id="tab-audio" onclick="switchTab('audio')"
+        class="tab-btn active px-5 py-2.5 rounded-xl text-sm font-medium border border-slate-700 transition">
+        🎙️ 음성 분석
+      </button>
+      <button id="tab-video" onclick="switchTab('video')"
+        class="tab-btn px-5 py-2.5 rounded-xl text-sm font-medium bg-slate-800 border border-slate-700 text-slate-300 transition">
+        📹 영상 분석
+      </button>
+    </div>
+
+    <!-- 음성 업로드 패널 -->
+    <div id="panel-audio">
+      <div class="bg-slate-800 rounded-2xl border border-slate-700 p-8">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-10 rounded-xl bg-purple-500 bg-opacity-20 flex items-center justify-center">
+            <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="font-semibold text-white">회의 음성 분석</h2>
+            <p class="text-xs text-slate-400">음성 텍스트 변환 및 핵심 내용 요약</p>
+          </div>
+        </div>
+
+        <form method="post" action="{% url 'upload_audio' %}" enctype="multipart/form-data" id="form-audio">
+          {% csrf_token %}
+          <div id="dropzone-audio"
+            class="drop-zone border-2 border-dashed border-slate-600 rounded-xl p-10 text-center cursor-pointer hover:border-purple-500 transition mb-6"
+            onclick="document.getElementById('audio-input').click()"
+            ondragover="onDragOver(event, 'audio')"
+            ondragleave="onDragLeave('audio')"
+            ondrop="onDrop(event, 'audio')">
+            <div class="text-4xl mb-3">🎙️</div>
+            <p class="text-slate-300 font-medium mb-1" id="audio-filename">파일을 드래그하거나 클릭하여 선택</p>
+            <p class="text-slate-500 text-xs">MP3, WAV, M4A, OGG, FLAC, WEBM — 최대 200MB</p>
+            <input type="file" id="audio-input" name="audio_file" accept=".mp3,.wav,.m4a,.ogg,.flac,.webm"
+              class="hidden" onchange="onFileSelect(event, 'audio')">
+          </div>
+
+          <div class="bg-slate-700 bg-opacity-50 rounded-xl p-4 mb-6 text-xs text-slate-400 space-y-1">
+            <p>• 업로드한 음성을 텍스트로 자동 변환합니다.</p>
+            <p>• 핵심 문장 <span class="text-white font-medium">3줄</span>을 자동으로 추출해 요약합니다.</p>
+            <p>• 분석 시간은 파일 길이에 따라 수 분이 소요될 수 있습니다.</p>
+          </div>
+
+          <button type="submit" id="btn-audio"
+            class="w-full py-3.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl transition
+                   focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:opacity-50"
+            onclick="showLoading('audio')">
+            음성 분석 시작
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 영상 업로드 패널 -->
+    <div id="panel-video" class="hidden">
+      <div class="bg-slate-800 rounded-2xl border border-slate-700 p-8">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-10 rounded-xl bg-blue-500 bg-opacity-20 flex items-center justify-center">
+            <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 10l4.553-2.069A1 1 0 0121 8.868v6.264a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="font-semibold text-white">CCTV 영상 분석</h2>
+            <p class="text-xs text-slate-400">방문객 통계 및 안전 경고 분석</p>
+          </div>
+        </div>
+
+        <form method="post" action="{% url 'upload_video' %}" enctype="multipart/form-data" id="form-video">
+          {% csrf_token %}
+          <div id="dropzone-video"
+            class="drop-zone border-2 border-dashed border-slate-600 rounded-xl p-10 text-center cursor-pointer hover:border-blue-500 transition mb-6"
+            onclick="document.getElementById('video-input').click()"
+            ondragover="onDragOver(event, 'video')"
+            ondragleave="onDragLeave('video')"
+            ondrop="onDrop(event, 'video')">
+            <div class="text-4xl mb-3">📹</div>
+            <p class="text-slate-300 font-medium mb-1" id="video-filename">파일을 드래그하거나 클릭하여 선택</p>
+            <p class="text-slate-500 text-xs">MP4, AVI, MOV, MKV, WMV — 최대 200MB</p>
+            <input type="file" id="video-input" name="video_file" accept=".mp4,.avi,.mov,.mkv,.wmv"
+              class="hidden" onchange="onFileSelect(event, 'video')">
+          </div>
+
+          <div class="bg-slate-700 bg-opacity-50 rounded-xl p-4 mb-6 text-xs text-slate-400 space-y-1">
+            <p>• 영상을 분석하여 <span class="text-blue-300">방문객 수·평균 체류 시간</span> 등 경영 지표를 제공합니다.</p>
+            <p>• <span class="text-yellow-300">군집 밀집·쓰러짐 감지</span> 등 안전 경고 타임라인을 확인할 수 있습니다.</p>
+          </div>
+
+          <button type="submit" id="btn-video"
+            class="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition
+                   focus:outline-none focus:ring-2 focus:ring-blue-400"
+            onclick="showLoading('video')">
+            영상 분석 시작
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 최근 분석 이력 -->
+    {% if recent_records %}
+    <div class="mt-10">
+      <h3 class="text-base font-semibold text-slate-300 mb-4">최근 분석 이력</h3>
+      <div class="space-y-2">
+        {% for rec in recent_records %}
+        <a href="{% url 'report' rec.id %}"
+           class="flex items-center justify-between p-4 bg-slate-800 rounded-xl border border-slate-700
+                  hover:border-slate-500 transition group">
+          <div class="flex items-center gap-3">
+            <span class="text-xl">{% if rec.analysis_type == 'audio' %}🎙️{% else %}📹{% endif %}</span>
+            <div>
+              <p class="text-sm font-medium text-white group-hover:text-blue-300 transition truncate max-w-xs">
+                {{ rec.original_filename }}
+              </p>
+              <p class="text-xs text-slate-500">{{ rec.created_at|date:"Y-m-d H:i" }}</p>
+            </div>
+          </div>
+          <span class="text-xs px-3 py-1 rounded-full font-medium
+            {% if rec.status == 'done' %}bg-green-500 bg-opacity-20 text-green-400
+            {% elif rec.status == 'error' %}bg-red-500 bg-opacity-20 text-red-400
+            {% else %}bg-yellow-500 bg-opacity-20 text-yellow-400{% endif %}">
+            {{ rec.get_status_display }}
+          </span>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+  </main>
+
+  <!-- 로딩 오버레이 -->
+  <div id="loading-overlay" class="hidden fixed inset-0 bg-slate-900 bg-opacity-80 flex items-center justify-center z-50">
+    <div class="text-center">
+      <div class="inline-block w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+      <p class="text-white font-medium" id="loading-msg">분석 중입니다...</p>
+      <p class="text-slate-400 text-sm mt-1">파일 크기에 따라 수 분이 소요될 수 있습니다.</p>
+    </div>
+  </div>
+
+  <script>
+    function switchTab(tab) {
+      const panels = ['audio', 'video'];
+      panels.forEach(t => {
+        document.getElementById('panel-' + t).classList.toggle('hidden', t !== tab);
+        const btn = document.getElementById('tab-' + t);
+        if (t === tab) {
+          btn.classList.add('active', 'bg-blue-600', 'text-white');
+          btn.classList.remove('bg-slate-800', 'text-slate-300');
+        } else {
+          btn.classList.remove('active', 'bg-blue-600', 'text-white');
+          btn.classList.add('bg-slate-800', 'text-slate-300');
+        }
+      });
+    }
+
+    function onFileSelect(event, type) {
+      const file = event.target.files[0];
+      if (file) {
+        document.getElementById(type + '-filename').textContent = '✅ ' + file.name;
+      }
+    }
+
+    function onDragOver(event, type) {
+      event.preventDefault();
+      document.getElementById('dropzone-' + type).classList.add('dragover');
+    }
+
+    function onDragLeave(type) {
+      document.getElementById('dropzone-' + type).classList.remove('dragover');
+    }
+
+    function onDrop(event, type) {
+      event.preventDefault();
+      document.getElementById('dropzone-' + type).classList.remove('dragover');
+      const file = event.dataTransfer.files[0];
+      if (file) {
+        const input = document.getElementById(type + '-input');
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        input.files = dt.files;
+        document.getElementById(type + '-filename').textContent = '✅ ' + file.name;
+      }
+    }
+
+    function showLoading(type) {
+      const msg = type === 'audio'
+        ? '🎙️ 음성 분석 중입니다...'
+        : '📹 영상 분석 중입니다...';
+      document.getElementById('loading-msg').textContent = msg;
+      document.getElementById('loading-overlay').classList.remove('hidden');
+    }
+  </script>
+
+</body>
+</html>

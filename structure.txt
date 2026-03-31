@@ -1,0 +1,23 @@
+store_insight/                     ← 프로젝트 루트
+├── manage.py
+├── requirements.txt
+├── media/
+│   └── uploads/                   ← 업로드 파일 저장
+├── store_insight/                 ← Django 설정 패키지
+│   ├── __init__.py
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+└── analysis/                      ← 핵심 앱
+    ├── __init__.py
+    ├── admin.py
+    ├── apps.py
+    ├── models.py
+    ├── services.py
+    ├── views.py
+    ├── urls.py
+    └── templates/
+        └── analysis/
+            ├── login.html
+            ├── dashboard.html
+            └── report.html

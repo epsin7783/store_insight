@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StoreInsight — 로컬 AI 매장 경영 분석</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: #0f172a; }
+    .gradient-text {
+      background: linear-gradient(135deg, #60a5fa, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-glow {
+      background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(59,130,246,0.15) 0%, transparent 70%);
+    }
+    .card-hover {
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .card-hover:hover {
+      transform: translateY(-4px);
+      border-color: rgba(99,102,241,0.5);
+    }
+  </style>
+</head>
+<body class="min-h-screen text-white">
+
+  <!-- 네비게이션 -->
+  <nav class="border-b border-slate-800 bg-slate-900 bg-opacity-70 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <!-- 로고 -->
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+        </div>
+        <span class="font-bold text-lg text-white">StoreInsight</span>
+      </div>
+
+      <!-- 네비 버튼 -->
+      <div class="flex items-center gap-3">
+        {% if user.is_authenticated %}
+          <span class="text-slate-400 text-sm hidden sm:inline">{{ user.username }}님</span>
+          <a href="{% url 'dashboard' %}"
+             class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition">
+            대시보드
+          </a>
+          <a href="{% url 'logout' %}"
+             class="px-4 py-2 border border-slate-600 hover:border-slate-400 text-slate-300 text-sm rounded-xl transition">
+            로그아웃
+          </a>
+        {% else %}
+          <a href="{% url 'login' %}"
+             class="px-4 py-2 border border-slate-600 hover:border-slate-400 text-slate-300 text-sm rounded-xl transition">
+            로그인
+          </a>
+          <a href="{% url 'register' %}"
+             class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition">
+            무료 시작하기
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+
+  <!-- 히어로 섹션 -->
+  <section class="hero-glow pt-20 pb-24 px-6 text-center">
+    <div class="max-w-4xl mx-auto">
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-blue-500 border-opacity-40
+                  bg-blue-500 bg-opacity-10 text-blue-300 text-xs font-medium mb-8">
+        <span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
+        오프라인 매장 창업자를 위한 AI 경영 솔루션
+      </div>
+
+      <h1 class="text-4xl sm:text-5xl font-extrabold leading-tight mb-6">
+        오프라인 매장을 위한<br>
+        <span class="gradient-text">AI 경영 분석 플랫폼</span>
+      </h1>
+
+      <p class="text-slate-400 text-lg max-w-2xl mx-auto mb-10 leading-relaxed">
+        회의 녹음을 업로드하면 자동으로 텍스트 변환 및 핵심 요약을,
+        CCTV 영상을 올리면 방문객 통계와 안전 경고 타임라인을 즉시 확인하세요.
+      </p>
+
+      <!-- CTA 버튼 -->
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        {% if user.is_authenticated %}
+          <a href="{% url 'dashboard' %}"
+             class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-blue-600 hover:bg-blue-500
+                    text-white font-bold rounded-2xl text-base transition shadow-lg shadow-blue-900">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+            분석 시작하기
+          </a>
+        {% else %}
+          <a href="{% url 'register' %}"
+             class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-blue-600 hover:bg-blue-500
+                    text-white font-bold rounded-2xl text-base transition shadow-lg shadow-blue-900">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            무료로 시작하기
+          </a>
+          <a href="{% url 'login' %}"
+             class="inline-flex items-center justify-center gap-2 px-8 py-4 border border-slate-600
+                    hover:border-slate-400 text-slate-300 font-semibold rounded-2xl text-base transition">
+            로그인
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <!-- 기능 카드 섹션 -->
+  <section class="max-w-6xl mx-auto px-6 pb-20">
+    <div class="text-center mb-12">
+      <h2 class="text-2xl font-bold text-white mb-3">두 가지 분석 모드</h2>
+      <p class="text-slate-400 text-sm">파일 하나만 올리면 AI가 즉시 리포트를 생성합니다.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+      <!-- 음성 분석 카드 -->
+      <div class="card-hover bg-slate-800 border border-slate-700 rounded-2xl p-8">
+        <div class="w-12 h-12 rounded-2xl bg-purple-500 bg-opacity-20 flex items-center justify-center mb-5">
+          <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+          </svg>
+        </div>
+        <h3 class="text-lg font-bold text-white mb-2">음성(회의) 분석</h3>
+        <p class="text-slate-400 text-sm mb-5 leading-relaxed">
+          회의 녹음 파일을 업로드하면 전체 내용을 텍스트로 자동 변환하고,
+          핵심 문장 3줄을 추출하여 회의 내용을 빠르게 파악할 수 있습니다.
+        </p>
+        <ul class="space-y-2 text-sm">
+          <li class="flex items-center gap-2 text-slate-300">
+            <span class="text-purple-400">✓</span> 음성 → 텍스트 자동 변환 (한국어 지원)
+          </li>
+          <li class="flex items-center gap-2 text-slate-300">
+            <span class="text-purple-400">✓</span> 핵심 문장 자동 추출 — 요약 3줄
+          </li>
+          <li class="flex items-center gap-2 text-slate-300">
+            <span class="text-purple-400">✓</span> MP3, WAV, M4A, OGG, FLAC 지원
+          </li>
+        </ul>
+      </div>
+
+      <!-- 영상 분석 카드 -->
+      <div class="card-hover bg-slate-800 border border-slate-700 rounded-2xl p-8">
+        <div class="w-12 h-12 rounded-2xl bg-blue-500 bg-opacity-20 flex items-center justify-center mb-5">
+          <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M15 10l4.553-2.069A1 1 0 0121 8.868v6.264a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <h3 class="text-lg font-bold text-white mb-2">영상(CCTV) 분석</h3>
+        <p class="text-slate-400 text-sm mb-5 leading-relaxed">
+          CCTV 영상을 올리면 방문객 수·평균 체류 시간 등 경영 지표와
+          군집 밀집·쓰러짐 감지 등 안전 경고 타임라인을 차트로 시각화합니다.
+        </p>
+        <ul class="space-y-2 text-sm">
+          <li class="flex items-center gap-2 text-slate-300">
+            <span class="text-blue-400">✓</span> 영상 자동 분석
+          </li>
+          <li class="flex items-center gap-2 text-slate-300">
+            <span class="text-blue-400">✓</span> 시간대별 방문객 통계 차트
+          </li>
+          <li class="flex items-center gap-2 text-slate-300">
+            <span class="text-blue-400">✓</span> 안전 경고 이벤트 타임라인
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 플로우 설명 -->
+    <div class="bg-slate-800 bg-opacity-50 border border-slate-700 rounded-2xl p-8">
+      <h3 class="text-center text-base font-semibold text-slate-300 mb-8">이용 방법</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+        <div class="flex flex-col items-center gap-3">
+          <div class="w-12 h-12 rounded-full bg-blue-600 bg-opacity-20 border border-blue-500 border-opacity-30
+                      flex items-center justify-center text-blue-300 font-bold text-lg">1</div>
+          <p class="text-sm font-medium text-white">회원가입 / 로그인</p>
+          <p class="text-xs text-slate-400">무료로 계정을 만들고 로그인하세요.</p>
+        </div>
+        <div class="flex flex-col items-center gap-3">
+          <div class="w-12 h-12 rounded-full bg-blue-600 bg-opacity-20 border border-blue-500 border-opacity-30
+                      flex items-center justify-center text-blue-300 font-bold text-lg">2</div>
+          <p class="text-sm font-medium text-white">파일 업로드</p>
+          <p class="text-xs text-slate-400">음성 또는 영상 파일을 드래그&드롭하세요.</p>
+        </div>
+        <div class="flex flex-col items-center gap-3">
+          <div class="w-12 h-12 rounded-full bg-blue-600 bg-opacity-20 border border-blue-500 border-opacity-30
+                      flex items-center justify-center text-blue-300 font-bold text-lg">3</div>
+          <p class="text-sm font-medium text-white">리포트 확인</p>
+          <p class="text-xs text-slate-400">AI가 자동 생성한 분석 리포트를 확인하세요.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 푸터 -->
+  <footer class="border-t border-slate-800 py-8 text-center text-slate-600 text-xs">
+    © 2025 StoreInsight — 오프라인 매장 경영 AI 분석 솔루션
+  </footer>
+
+</body>
+</html>
